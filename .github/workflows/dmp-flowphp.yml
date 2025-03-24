@@ -13,8 +13,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Archive repository
-        run: tar -czvf app.tar.gz ./*
+      - name: Set build number
+        run: echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
+
+      - name: Archive repository with build number
+        run: tar -czvf app-${{ env.BUILD_NUMBER }}.tar.gz ./*
 
       - name: Copy archive to server
         uses: appleboy/scp-action@v0.1.7
@@ -22,7 +25,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.USER_NAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "app.tar.gz"
+          source: "app-${{ env.BUILD_NUMBER }}.tar.gz"
           target: "/var/www/build-staging"
 
       - name: Extract archive and install dependencies
@@ -33,4 +36,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/build-staging
-            tar -xzvf app.tar.gz
+            tar -xzvf app-${{ github.run_number }}.tar.gz
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+            SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
