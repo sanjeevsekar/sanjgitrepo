@@ -39,7 +39,7 @@ jobs:
           script: |
             cd /var/www/build-staging
             mkdir -p app-${{ github.run_number }}
-            tar -xzvf app-${{ github.run_number }}.tar.gz app-${{ github.run_number }}
+            tar -xzvf app-${{ github.run_number }}.tar.gz -C app-${{ github.run_number }}
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
