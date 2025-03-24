@@ -36,7 +36,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/build-staging
-            tar -xzvf app-${{ github.run_number }}.tar.gz -C app${{ env.BUILD_NUMBER }}/
+            tar -xzvf app-${{ github.run_number }}.tar.gz -C app-${{ env.BUILD_NUMBER }}/
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
