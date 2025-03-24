@@ -40,7 +40,12 @@ jobs:
             cd /var/www/build-staging
             mkdir -p app-${{ github.run_number }}
             tar -xzvf app-${{ github.run_number }}.tar.gz -C app-${{ github.run_number }}
+            if [ ! -f "var/www/360apps-orchid-staging/app" ]; then
+            rm -rf var/www/360apps-orchid-staging/app
             ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
+            else
+            ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
+            fi
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
