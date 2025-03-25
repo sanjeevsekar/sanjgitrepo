@@ -14,6 +14,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: app
+      - name: Replace Database Config with Secrets
+        run: |
+          sed -i "s/DBNAME/${{ secrets.DBNAME }}/g" app/dmp_config.php
+          sed -i "s/DBUSER/${{ secrets.DBUSER }}/g" app/dmp_config.php
+          sed -i "s/DBPASS/${{ secrets.DBPASS }}/g" app/dmp_config.php
+          sed -i "s/DBHOST/${{ secrets.DBHOST }}/g" app/dmp_config.php
 
       - name: Set build number
         run: echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
