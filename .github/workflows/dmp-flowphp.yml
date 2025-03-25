@@ -3,7 +3,7 @@ name: Deploy to Backend Servers
 on:
   push:
     branches:
-      - main  # Change this to your deployment branchs
+      - main  # Change this to your deployment branches
 
 jobs:
   deploy:
