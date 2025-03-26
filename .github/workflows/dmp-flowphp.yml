@@ -53,7 +53,7 @@ jobs:
             if [ ! -f "/var/www/360apps-orchid-staging/app" ]; then
             rm -rf /var/www/360apps-orchid-staging/app
             ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
-            else
+            els
             ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
             fi
 
