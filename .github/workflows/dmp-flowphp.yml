@@ -23,7 +23,7 @@ jobs:
           sed -i "s/DBHOST/${{ secrets.DBHOST }}/g" app/dmp_config.php
 
      - name: Set build number
-                  run: echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
+       run: echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
 
       - name: Archive repository with build number
         run: tar -czvf app-${{ github.run_number }}.tar.gz ./*
@@ -46,7 +46,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd /var/www/build-staging
+            cd /var/www/build-staging1
             mkdir -p app-${{ github.run_number }}
             tar -xzvf app-${{ github.run_number }}.tar.gz -C app-${{ github.run_number }}
             # Remove existing symlink or folder
