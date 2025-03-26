@@ -18,14 +18,6 @@ jobs:
         with:
           ref: ${{ env.DEPLOY_COMMIT != '' && env.DEPLOY_COMMIT || 'main' }}  # 🔹 Use specific commit if set, else latest main
 
-      - name: Get Current Commit SHA
-        run: |
-          echo "CURRENT_COMMIT=$(git rev-parse HEAD)" >> $GITHUB_ENV
-          echo "Current Commit: $(git rev-parse HEAD)"
-
-      - name: Set Build Number
-        run: echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
-
       - name: Archive repository
         run: tar -czvf app-${{ github.run_number }}.tar.gz ./app
 
