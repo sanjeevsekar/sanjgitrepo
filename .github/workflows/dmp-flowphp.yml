@@ -41,7 +41,7 @@ jobs:
       - name: Extract archive and install dependencies
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ secrets.SSH_HOSTT }}
+          host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.USER_NAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
