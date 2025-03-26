@@ -3,7 +3,7 @@ name: Deploy to Backend Servers
 on:
   push:
     branches:
-      - main
+      - ${{ secrets.MYBRANCH }}
 
 jobs:
   deploy:
