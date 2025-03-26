@@ -27,8 +27,8 @@ jobs:
       - name: Archive repository with build number
         run: tar -czvf app-${{ github.run_number }}.tar.gz ./*
 
-      - name: Copy archive to server
-        uses: appleboy/ssh-action@v1.2.0
+            - name: Copy archive to server
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.USER_NAME }}
@@ -38,7 +38,7 @@ jobs:
           target: "/var/www/build-staging"
 
       - name: Extract archive and install dependencies
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.USER_NAME }}
