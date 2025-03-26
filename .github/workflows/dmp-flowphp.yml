@@ -22,6 +22,9 @@ jobs:
           sed -i "s/DBPASS/${{ secrets.DBPASS }}/g" app/dmp_config.php
           sed -i "s/DBHOST/${{ secrets.DBHOST }}/g" app/dmp_config.php
 
+      - name: Set build number
+        run: echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
+
       - name: Archive repository with build number
         run: tar -czvf app-${{ github.run_number }}.tar.gz ./*
 
@@ -43,7 +46,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd /var/www/build-staging1
+            cd /var/www/build-staging
             mkdir -p app-${{ github.run_number }}
             tar -xzvf app-${{ github.run_number }}.tar.gz -C app-${{ github.run_number }}
             # Remove existing symlink or folder
@@ -54,23 +57,21 @@ jobs:
             ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
             fi
 
-      - name: Slack Notification on Success
-        if: success()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_COLOR: "#36a64f"
-          SLACK_MESSAGE: "✅ Deployment *successful* for build #${{ github.run_number }} \n Repository: ${{ github.repository }} \n Commit: ${{ github.sha }} \n Commit msg: ${{ github.event.head_commit.message }}"
-
-  notify_failure:
+  notify:
     needs: deploy
-    if: failure()
+    if: always()  # Ensures notification is sent in all cases (success, failure, or cancel)
     runs-on: ubuntu-20.04
 
     steps:
-      - name: Send Slack Notification on Failure
+      - name: Send Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_COLOR: "#FF0000"
-          SLACK_MESSAGE: "❌ Deployment *failed* for build #${{ github.run_number }} \n Repository: ${{ github.repository }} \n Commit: ${{ github.sha }} \n Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          SLACK_COLOR: ${{ job.status == 'success' && '#36a64f' || '#FF0000' }}
+          SLACK_MESSAGE: |
+            *Deployment Status:* ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
+            *Build Number:* #${{ github.run_number }}
+            *Repository:* ${{ github.repository }}
+            *Commit:* ${{ github.sha }}
+            *Commit Message:* _${{ github.event.head_commit.message }}_
+            *Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
