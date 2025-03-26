@@ -39,10 +39,10 @@ jobs:
           target: "/var/www/build-staging"
 
       - name: Extract archive and install dependencies
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.USER_NAME }}
+          username: ${{ secrets.USER_NAMEs }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
@@ -74,4 +74,3 @@ jobs:
             *Repository:* ${{ github.repository }}
             *Commit:* ${{ github.sha }}
             *Commit Message:* _${{ github.event.head_commit.message }}_
-            *Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
