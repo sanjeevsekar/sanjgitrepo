@@ -19,16 +19,6 @@ jobs:
           ref: ${{ env.DEPLOY_BRANCH }}  # 🔹 Uses branch or commit ID dynamically
           fetch-depth: 0  # Ensures full history for correct commit resolution
 
-      - name: Verify Checkout
-        run: |
-          echo "Checked out branch/commit: ${{ env.DEPLOY_BRANCH }}"
-          git log -1 --oneline  # Show the latest commit for verification
-
-      - name: Get Current Commit SHA
-        run: |
-          echo "CURRENT_COMMIT=$(git rev-parse HEAD)" >> $GITHUB_ENV
-          echo "Current Commit: $(git rev-parse HEAD)"
-
       - name: Replace Database Config with Secrets
         run: |
           sed -i "s/DBNAME/${{ secrets.DBNAME }}/g" app/dmp_config.php
