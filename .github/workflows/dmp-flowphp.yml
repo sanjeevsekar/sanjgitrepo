@@ -16,10 +16,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.DEPLOY_COMMIT != '' && env.DEPLOY_COMMIT || 'main' }}  # 🔹 Use specific commit if set, else latest main
+          ref: ${{ env.DEPLOY_COMMIT != '' && env.DEPLOY_COMMIT || 'main' }}
+          fetch-depth: 0  # 🔹 Ensures full history is fetched
+
+      - name: Verify Checkout
+        run: ls -la  # 🔹 Debug step to check if repository is cloned properly
+
+      - name: Get Current Commit SHA
+        run: |
+          echo "CURRENT_COMMIT=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          echo "Current Commit: $(git rev-parse HEAD)"
+
+      - name: Set Build Number
+        run: echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
 
       - name: Archive repository
-        run: tar -czvf app-${{ github.run_number }}.tar.gz ./app
+        run: tar -czvf app-${{ github.run_number }}.tar.gz .  # 🔹 Archive everything in the root directory
+
+      - name: Verify Archive
+        run: ls -la app-${{ github.run_number }}.tar.gz  # 🔹 Debug step to confirm archive creation
 
       - name: Copy archive to server
         uses: appleboy/scp-action@v0.1.7
@@ -45,34 +60,3 @@ jobs:
             rm -rf /var/www/360apps-orchid-staging/app
             ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
             echo "${{ env.DEPLOY_COMMIT != '' && env.DEPLOY_COMMIT || github.sha }}" > /var/www/360apps-orchid-staging/commit_id.txt
-
-  notify:
-    needs: deploy
-    runs-on: ubuntu-20.04
-    if: always()
-
-    steps:
-      - name: Set Notification Status
-        run: |
-          if [[ "${{ needs.deploy.result }}" == "success" ]]; then
-            echo "STATUS_ICON=✅" >> $GITHUB_ENV
-            echo "STATUS_TEXT=Success" >> $GITHUB_ENV
-            echo "STATUS_COLOR=#36a64f" >> $GITHUB_ENV
-          else
-            echo "STATUS_ICON=❌" >> $GITHUB_ENV
-            echo "STATUS_TEXT=Failed" >> $GITHUB_ENV
-            echo "STATUS_COLOR=#FF0000" >> $GITHUB_ENV
-          fi
-
-      - name: Send Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_COLOR: ${{ env.STATUS_COLOR }}
-          SLACK_MESSAGE: |
-            *Deployment Status:* ${{ env.STATUS_ICON }} ${{ env.STATUS_TEXT }}
-            *Build Number:* #${{ github.run_number }}
-            *Repository:* ${{ github.repository }}
-            *Deployed Commit:* ${{ env.DEPLOY_COMMIT != '' && env.DEPLOY_COMMIT || github.sha }}
-            *Commit Message:* _${{ github.event.head_commit.message }}_
-            *Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
