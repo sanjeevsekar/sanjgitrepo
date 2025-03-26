@@ -54,7 +54,6 @@ jobs:
             fi
             # Create a new symlink to the latest build
             ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
-            rm -rf app-${{ github.run_number }}.tar.gz
             
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
