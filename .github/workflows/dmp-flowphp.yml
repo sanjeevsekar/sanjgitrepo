@@ -3,7 +3,7 @@ name: Deploy to Backend Servers
 on:
   push:
     branches:
-      - main  # Change this to your deployment branches
+      - main
 
 jobs:
   deploy:
@@ -49,28 +49,40 @@ jobs:
             cd /var/www/build-staging
             mkdir -p app-${{ github.run_number }}
             tar -xzvf app-${{ github.run_number }}.tar.gz -C app-${{ github.run_number }}
-            # Remove existing symlink or folder
             if [ ! -f "/var/www/360apps-orchid-staging/app" ]; then
-            rm -rf /var/www/360apps-orchid-staging/app
-            ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
+              rm -rf /var/www/360apps-orchid-staging/app
+              ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
             else
-            ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
+              ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
             fi
 
   notify:
     needs: deploy
-    if: always()  # Ensures notification is sent in all cases (success, failure, or cancel)
     runs-on: ubuntu-20.04
+    if: always()  # Always run regardless of success/failure
 
     steps:
+      - name: Set Notification Status
+        run: |
+          if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+            echo "STATUS_ICON=✅" >> $GITHUB_ENV
+            echo "STATUS_TEXT=Success" >> $GITHUB_ENV
+            echo "STATUS_COLOR=#36a64f" >> $GITHUB_ENV
+          else
+            echo "STATUS_ICON=❌" >> $GITHUB_ENV
+            echo "STATUS_TEXT=Failed" >> $GITHUB_ENV
+            echo "STATUS_COLOR=#FF0000" >> $GITHUB_ENV
+          fi
+
       - name: Send Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_COLOR: ${{ job.status == 'success' && '#36a64f' || '#FF0000' }}
+          SLACK_COLOR: ${{ env.STATUS_COLOR }}
           SLACK_MESSAGE: |
-            *Deployment Status:* ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
+            *Deployment Status:* ${{ env.STATUS_ICON }} ${{ env.STATUS_TEXT }}
             *Build Number:* #${{ github.run_number }}
             *Repository:* ${{ github.repository }}
             *Commit:* ${{ github.sha }}
             *Commit Message:* _${{ github.event.head_commit.message }}_
+            *Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
