@@ -25,7 +25,7 @@ jobs:
         run: echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
 
       - name: Archive repository with build number
-        run: tar -czvf app-${{ env.BUILD_NUMBER }}.tar.gz ./*
+        run: tar -czvf app-${{ github.run_number }}.tar.gz ./*
 
       - name: Copy archive to server
         uses: appleboy/scp-action@v0.1.7
@@ -33,7 +33,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.USER_NAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "app-${{ env.BUILD_NUMBER }}.tar.gz"
+          source: "app-${{ github.run_number }}.tar.gz"
           target: "/var/www/build-staging"
 
       - name: Extract archive and install dependencies
