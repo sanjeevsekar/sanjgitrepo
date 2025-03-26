@@ -28,20 +28,22 @@ jobs:
         run: tar -czvf app-${{ github.run_number }}.tar.gz ./*
 
       - name: Copy archive to server
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.USER_NAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
           source: "app-${{ github.run_number }}.tar.gz"
           target: "/var/www/build-staging"
 
       - name: Extract archive and install dependencies
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.USER_NAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
           script: |
             cd /var/www/build-staging
             mkdir -p app-${{ github.run_number }}
