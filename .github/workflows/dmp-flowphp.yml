@@ -49,11 +49,12 @@ jobs:
             mkdir -p app-${{ github.run_number }}
             tar -xzvf app-${{ github.run_number }}.tar.gz -C app-${{ github.run_number }}
             # Remove existing symlink or folder
-            if [ -L "/var/www/360apps-orchid-staging/app" ] || [ -d "/var/www/360apps-orchid-staging/app" ]; then
-              rm -rf /var/www/360apps-orchid-staging/app
-            fi
-            # Create a new symlink to the latest build
+            if [ ! -f "/var/www/360apps-orchid-staging/app" ]; then
+            rm -rf /var/www/360apps-orchid-staging/app
             ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
+            else
+            ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
+            fi
             
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
