@@ -3,21 +3,17 @@ name: Deploy to Backend Servers
 on:
   push:
     branches:
-      - main  # 🔹 Triggers when code is pushed to main
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-20.04
 
-    env:
-      DEPLOY_BRANCH: "main"  # 🔹 Change this to a branch name or commit ID if needed
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.DEPLOY_BRANCH }}  # 🔹 Uses branch or commit ID dynamically
-          fetch-depth: 0  # Ensures full history for correct commit resolution
+          path: app
 
       - name: Replace Database Config with Secrets
         run: |
@@ -26,14 +22,11 @@ jobs:
           sed -i "s/DBPASS/${{ secrets.DBPASS }}/g" app/dmp_config.php
           sed -i "s/DBHOST/${{ secrets.DBHOST }}/g" app/dmp_config.php
 
-      - name: Set Build Number
+      - name: Set build number
         run: echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
 
-      - name: Archive repository
-        run: tar -czvf app-${{ github.run_number }}.tar.gz .  # 🔹 Archive everything
-
-      - name: Verify Archive
-        run: ls -la app-${{ github.run_number }}.tar.gz  # 🔹 Debugging step
+      - name: Archive repository with build number
+        run: tar -czvf app-${{ github.run_number }}.tar.gz ./*
 
       - name: Copy archive to server
         uses: appleboy/scp-action@v0.1.7
@@ -45,7 +38,7 @@ jobs:
           source: "app-${{ github.run_number }}.tar.gz"
           target: "/var/www/build-staging"
 
-      - name: Deploy Application
+      - name: Extract archive and install dependencies
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -56,9 +49,12 @@ jobs:
             cd /var/www/build-staging
             mkdir -p app-${{ github.run_number }}
             tar -xzvf app-${{ github.run_number }}.tar.gz -C app-${{ github.run_number }}
-            rm -rf /var/www/360apps-orchid-staging/app
-            ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
-            echo "${{ env.DEPLOY_BRANCH }}" > /var/www/360apps-orchid-staging/deployed_version.txt
+            if [ ! -f "/var/www/360apps-orchid-staging/app" ]; then
+              rm -rf /var/www/360apps-orchid-staging/app
+              ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
+            else
+              ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
+            fi
 
   notify:
     needs: deploy
@@ -89,5 +85,4 @@ jobs:
             *Repository:* ${{ github.repository }}
             *Commit:* ${{ github.sha }}
             *Commit Message:* _${{ github.event.head_commit.message }}_
-            *Deployed Branch/Commit:* `${{ env.DEPLOY_BRANCH }}`
             *Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
