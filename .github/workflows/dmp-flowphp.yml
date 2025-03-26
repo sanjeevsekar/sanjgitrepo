@@ -63,7 +63,7 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_COLOR: "#36a64f"
-          SLACK_MESSAGE: "✅ Deployment *successful* for build #${{ github.run_number }} \n Repository: ${{ github.repository }} \n Commit: ${{ github.sha }}"
+          SLACK_MESSAGE: "✅ Deployment *successful* for build #${{ github.run_number }} \n Repository: ${{ github.repository }} \n Commit: ${{ github.sha }} \n Commit msg: ${{ github.event.head_commit.message }}"
 
   notify_failure:
     needs: deploy
