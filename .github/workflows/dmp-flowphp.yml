@@ -9,24 +9,25 @@ jobs:
   deploy:
     runs-on: ubuntu-20.04
 
+    env:
+      DEPLOY_COMMIT: ""  # 🔹 Enter commit SHA manually if needed (otherwise it fetches 'main')
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          path: app
+          ref: ${{ env.DEPLOY_COMMIT != '' && env.DEPLOY_COMMIT || 'main' }}  # 🔹 Use specific commit if set, else latest main
 
-      - name: Replace Database Config with Secrets
+      - name: Get Current Commit SHA
         run: |
-          sed -i "s/DBNAME/${{ secrets.DBNAME }}/g" app/dmp_config.php
-          sed -i "s/DBUSER/${{ secrets.DBUSER }}/g" app/dmp_config.php
-          sed -i "s/DBPASS/${{ secrets.DBPASS }}/g" app/dmp_config.php
-          sed -i "s/DBHOST/${{ secrets.DBHOST }}/g" app/dmp_config.php
+          echo "CURRENT_COMMIT=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          echo "Current Commit: $(git rev-parse HEAD)"
 
-      - name: Set build number
+      - name: Set Build Number
         run: echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
 
-      - name: Archive repository with build number
-        run: tar -czvf app-${{ github.run_number }}.tar.gz ./*
+      - name: Archive repository
+        run: tar -czvf app-${{ github.run_number }}.tar.gz ./app
 
       - name: Copy archive to server
         uses: appleboy/scp-action@v0.1.7
@@ -38,7 +39,7 @@ jobs:
           source: "app-${{ github.run_number }}.tar.gz"
           target: "/var/www/build-staging"
 
-      - name: Extract archive and install dependencies
+      - name: Deploy Application
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -49,17 +50,14 @@ jobs:
             cd /var/www/build-staging
             mkdir -p app-${{ github.run_number }}
             tar -xzvf app-${{ github.run_number }}.tar.gz -C app-${{ github.run_number }}
-            if [ ! -f "/var/www/360apps-orchid-staging/app" ]; then
-              rm -rf /var/www/360apps-orchid-staging/app
-              ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
-            else
-              ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
-            fi
+            rm -rf /var/www/360apps-orchid-staging/app
+            ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
+            echo "${{ env.DEPLOY_COMMIT != '' && env.DEPLOY_COMMIT || github.sha }}" > /var/www/360apps-orchid-staging/commit_id.txt
 
   notify:
     needs: deploy
     runs-on: ubuntu-20.04
-    if: always()  # Always run regardless of success/failure
+    if: always()
 
     steps:
       - name: Set Notification Status
@@ -83,6 +81,6 @@ jobs:
             *Deployment Status:* ${{ env.STATUS_ICON }} ${{ env.STATUS_TEXT }}
             *Build Number:* #${{ github.run_number }}
             *Repository:* ${{ github.repository }}
-            *Commit:* ${{ github.sha }}
+            *Deployed Commit:* ${{ env.DEPLOY_COMMIT != '' && env.DEPLOY_COMMIT || github.sha }}
             *Commit Message:* _${{ github.event.head_commit.message }}_
             *Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
