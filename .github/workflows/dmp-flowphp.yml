@@ -37,7 +37,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           source: "app-${{ github.run_number }}.tar.gz"
-          target: "/var/www/build-staging"
+          target: "/var/www/build-staging/app"
 
       - name: Extract archive and install dependencies
         uses: appleboy/ssh-action@v0.1.7
@@ -47,15 +47,16 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd /var/www/build-staging
+            cd /var/www/build-staging/app
             mkdir -p app-${{ github.run_number }}
             tar -xzvf app-${{ github.run_number }}.tar.gz -C app-${{ github.run_number }}
             if [ ! -f "/var/www/360apps-orchid-staging/app" ]; then
               rm -rf /var/www/360apps-orchid-staging/app
-              ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
+              ln -s /var/www/build-staging/app/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
             else
-              ln -s /var/www/build-staging/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
+              ln -s /var/www/build-staging/app/app-${{ github.run_number }}/app /var/www/360apps-orchid-staging/app
             fi
+            rm -rf app-${{ github.run_number }}.tar.gz
 
   notify:
     needs: deploy
