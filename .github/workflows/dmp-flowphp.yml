@@ -1,10 +1,15 @@
-name: Deploy to Backend Serverss
+name: Deploy to Backend Servers
 
 on:
   push:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Commit SHA to deploy"
+        required: true
+        default: "main"
 
 jobs:
   deploy:
@@ -14,6 +19,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.commit_sha }}
           path: app
 
       - name: Replace Database Config with Secrets
@@ -85,6 +91,6 @@ jobs:
             *Deployment Status:* ${{ env.STATUS_ICON }} ${{ env.STATUS_TEXT }}
             *Build Number:* #${{ github.run_number }}
             *Repository:* ${{ github.repository }}
-            *Commit:* ${{ github.sha }}
+            *Commit:* ${{ github.event.inputs.commit_sha }}
             *Commit Message:* _${{ github.event.head_commit.message }}_
             *Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
